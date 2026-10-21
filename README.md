@@ -1,9 +1,9 @@
-# 视频分析 · DeepSeek
+# 视频分析
 
 > 把网页里正在播放的视频、视频链接或本地视频文件，变成**可搜索的转写文字 + 结构化总结 + 可对话的 AI 助手**。
-> 音频转文字全程在本机 GPU 上完成，视频内容理解与问答由 **DeepSeek** 驱动。
+> 音频转文字全程在本机 GPU 上完成，视频内容理解与问答由 **LLM-API** 驱动。
 >
-> 项目仓库：[renyu2002/Radio-Analysis](https://github.com/renyu2002/Radio-Analysis) · 本地运行工具（Web 界面 + Chrome MV3 扩展），**仓库不包含任何 API Key、密钥或运行数据**。
+> 项目仓库：[renyu2002/Radio-Analysis](https://github.com/renyu2002/Radio-Analysis) · 本地运行工具（Web 界面 + Chrome MV3 扩展）
 
 ![首页](docs/images/home.png)
 
