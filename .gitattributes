@@ -1,0 +1,12 @@
+# 默认按文本处理，仓库内统一 LF；二进制文件不做换行转换
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.mp4 binary
+*.wav binary
+*.webp binary
+*.ico binary
+*.onnx binary

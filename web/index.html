@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0b0e14">
+  <title>视频分析 · DeepSeek</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234d6bfe'/%3E%3Cstop offset='1' stop-color='%238e5cf5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M13 10.5v11l9-5.5-9-5.5Z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 内联 SVG 图标库（离线可用，不引外部资源） -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="svg-sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-logo" viewBox="0 0 24 24"><path d="M9.2 7.1v9.8c0 .9 1 1.4 1.8.9l7.4-4.9c.7-.4.7-1.5 0-1.9L11 6.1c-.8-.5-1.8 0-1.8 1Z" fill="currentColor"/><circle cx="5.1" cy="12" r="1.7" fill="currentColor" opacity=".85"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v13"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="m19 6-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></symbol>
+    <symbol id="i-chrome" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M21 8H12"/><path d="M3.4 15.6 8.1 8.1"/><path d="m15.4 15.6-4.7 8"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m20 6-11 11-5-5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M22 2 11 13"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m10.29 3.86-8.2 14.2A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.73-2.94l-8.2-14.2a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777Z"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></symbol>
+    <symbol id="i-file-video" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="m10 12 5 3-5 3v-6Z"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5Z"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7-11-7Z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7a4 4 0 0 1-4 4"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7a4 4 0 0 1-4 4"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.3"/></symbol>
+    <symbol id="i-link-2" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.5l-2-3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+  </svg>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo"><svg class="icon icon-fill"><use href="#i-logo"/></svg></div>
+        <div class="brand-text">
+          <span class="brand-name">视频分析</span>
+          <span class="brand-dot">·</span>
+          <span class="brand-sub">DeepSeek</span>
+        </div>
+        <span class="brand-version" id="brandVersion">本地版</span>
+      </div>
+      <div class="topbar-right">
+        <button id="statusPill" class="status-pill" type="button" title="点击重新检测后端连接">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">连接中…</span>
+        </button>
+        <button id="btnSettings" class="btn btn-ghost btn-with-icon" type="button">
+          <svg class="icon"><use href="#i-settings"/></svg><span>设置</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <aside class="sidebar">
+        <section class="panel new-job">
+          <div class="panel-head">
+            <h2><svg class="icon"><use href="#i-spark"/></svg>新建分析</h2>
+          </div>
+
+          <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="拖入视频文件或点击选择文件">
+            <div class="dropzone-icon"><svg class="icon"><use href="#i-upload"/></svg></div>
+            <div class="dropzone-title">拖入视频文件</div>
+            <div class="dropzone-sub">或点击选择 · mp4 / mkv / mov / webm</div>
+            <input id="fileInput" type="file" accept="video/*,.mkv,.flv,.ts,.m4v" hidden>
+          </div>
+
+          <div id="uploadProgress" class="upload-progress is-hidden">
+            <div class="upload-progress-head">
+              <span class="upload-name" id="uploadName">上传中…</span>
+              <span class="upload-pct" id="uploadPct">0%</span>
+            </div>
+            <div class="bar"><div id="uploadBar" class="bar-fill"></div></div>
+            <div class="upload-actions">
+              <span class="muted" id="uploadHint">正在上传到本地服务</span>
+              <button id="btnCancelUpload" class="link-btn" type="button">取消</button>
+            </div>
+          </div>
+
+          <div class="or-divider"><span>或粘贴链接</span></div>
+
+          <div class="url-row">
+            <div class="input-with-icon">
+              <svg class="icon"><use href="#i-link"/></svg>
+              <input id="urlInput" class="input" type="url" placeholder="B 站 / YouTube 视频页面链接" spellcheck="false" autocomplete="off">
+            </div>
+            <button id="btnAnalyzeUrl" class="btn btn-primary" type="button">分析</button>
+          </div>
+
+          <details class="ext-hint">
+            <summary><svg class="icon"><use href="#i-chrome"/></svg><span>从浏览器当前标签页分析</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+            <div class="ext-hint-body">
+              <p>安装项目自带的 Chrome 扩展后，在任意视频页面点击扩展图标 →「分析这个视频」，作业会自动出现在历史列表中。</p>
+              <p class="muted">扩展安装：打开 <code>chrome://extensions</code> → 开启开发者模式 → 加载已解压的扩展程序 → 选择项目中的 <code>extension</code> 目录。</p>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel history">
+          <div class="panel-head">
+            <h2><svg class="icon"><use href="#i-clock"/></svg>历史作业</h2>
+            <span class="count" id="jobCount">0</span>
+            <button id="btnRefreshJobs" class="icon-btn push-right" type="button" title="刷新列表" aria-label="刷新作业列表">
+              <svg class="icon"><use href="#i-refresh"/></svg>
+            </button>
+          </div>
+          <div id="jobList" class="job-list">
+            <div class="list-placeholder">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="content" id="content">
+        <!-- 空状态 -->
+        <div id="emptyState" class="empty-state">
+          <div class="empty-visual" aria-hidden="true">
+            <div class="orbit orbit-1"></div>
+            <div class="orbit orbit-2"></div>
+            <div class="orbit orbit-3"></div>
+            <div class="empty-play"><svg class="icon icon-fill"><use href="#i-play"/></svg></div>
+          </div>
+          <h1>看懂每一个视频</h1>
+          <p class="empty-desc">上传本地视频或粘贴网页链接，自动完成语音转写、内容总结与画面文字识别，还能基于视频内容对话，所有答案都带时间戳引用。</p>
+          <div class="empty-actions">
+            <button class="btn btn-primary btn-lg" id="btnEmptyUpload" type="button">
+              <svg class="icon"><use href="#i-upload"/></svg>选择视频文件
+            </button>
+            <button class="btn btn-ghost btn-lg" id="btnEmptySettings" type="button">
+              <svg class="icon"><use href="#i-key"/></svg>配置 API Key
+            </button>
+          </div>
+          <div id="offlineHint" class="offline-hint is-hidden">
+            <svg class="icon"><use href="#i-alert"/></svg>
+            <div>
+              <strong>本地服务未连接</strong>
+              <p>请先启动后端（在项目根目录运行 <code>run.ps1</code> 或 <code>python -m vanalyze</code>），然后点击右上角状态点重试。</p>
+            </div>
+          </div>
+          <div class="feature-grid">
+            <div class="feature">
+              <div class="feature-icon"><svg class="icon"><use href="#i-list"/></svg></div>
+              <h3>语音转文字</h3>
+              <p>本地 faster-whisper，GPU 加速，离线可用</p>
+            </div>
+            <div class="feature">
+              <div class="feature-icon"><svg class="icon"><use href="#i-spark"/></svg></div>
+              <h3>结构化总结</h3>
+              <p>章节、要点、关键词、金句，DeepSeek 生成</p>
+            </div>
+            <div class="feature">
+              <div class="feature-icon"><svg class="icon"><use href="#i-scan"/></svg></div>
+              <h3>画面文字</h3>
+              <p>本地 OCR 提取 PPT、字幕与画面文字</p>
+            </div>
+            <div class="feature">
+              <div class="feature-icon"><svg class="icon"><use href="#i-message"/></svg></div>
+              <h3>视频问答</h3>
+              <p>基于转写内容对话，引用时间戳可跳转</p>
+            </div>
+          </div>
+          <p class="empty-foot">视频与转写全部留在本机，仅总结与问答会调用你配置的 DeepSeek API。</p>
+        </div>
+
+        <!-- 作业详情 -->
+        <div id="jobView" class="job-view is-hidden">
+          <div class="job-head">
+            <div class="job-head-main">
+              <div class="job-title-row">
+                <h1 id="jobTitle">未命名视频</h1>
+                <span id="jobStatusBadge" class="status-badge">处理中</span>
+                <span id="jobSourceBadge" class="badge">本地文件</span>
+              </div>
+              <div class="job-meta" id="jobMeta"></div>
+            </div>
+            <div class="job-actions">
+              <button id="btnRegenerate" class="btn btn-ghost btn-with-icon is-hidden" type="button">
+                <svg class="icon"><use href="#i-refresh"/></svg><span>重新生成总结</span>
+              </button>
+              <button id="btnDeleteJob" class="btn btn-ghost danger btn-with-icon" type="button">
+                <svg class="icon"><use href="#i-trash"/></svg><span>删除</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="error-banner is-hidden" id="errorBanner">
+            <div class="error-icon"><svg class="icon"><use href="#i-alert"/></svg></div>
+            <div class="error-body">
+              <strong>分析失败</strong>
+              <p id="errorMessage"></p>
+            </div>
+            <button id="btnRetryJob" class="btn btn-primary" type="button">重试</button>
+          </div>
+
+          <div class="stage-strip is-hidden" id="stageStrip"></div>
+
+          <div class="player-card" id="playerCard">
+            <div class="player-wrap" id="playerWrap">
+              <video id="video" controls preload="metadata" playsinline></video>
+              <div class="player-placeholder" id="playerPlaceholder">
+                <div class="spinner"></div>
+                <p id="playerPlaceholderText">视频处理中…</p>
+              </div>
+              <div class="player-processing is-hidden" id="playerProcessing">
+                <span class="spinner spinner-sm"></span>
+                <span id="playerProcessingText">处理中</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabs" role="tablist" aria-label="作业内容">
+            <button class="tab active" type="button" role="tab" data-tab="summary" aria-selected="true" aria-controls="tab-summary">总结</button>
+            <button class="tab" type="button" role="tab" data-tab="transcript" aria-selected="false" aria-controls="tab-transcript">转写<span class="tab-count" id="transcriptTabCount"></span></button>
+            <button class="tab" type="button" role="tab" data-tab="ocr" aria-selected="false" aria-controls="tab-ocr">画面文字<span class="tab-count" id="ocrTabCount"></span></button>
+            <button class="tab" type="button" role="tab" data-tab="chat" aria-selected="false" aria-controls="tab-chat">对话</button>
+            <div class="tab-underline" id="tabUnderline"></div>
+          </div>
+
+          <div class="panel-body">
+            <div id="tab-summary" class="tab-panel" role="tabpanel" aria-labelledby="tab-summary-btn"></div>
+            <div id="tab-transcript" class="tab-panel is-hidden" role="tabpanel"></div>
+            <div id="tab-ocr" class="tab-panel is-hidden" role="tabpanel"></div>
+
+            <div id="tab-chat" class="tab-panel chat-panel is-hidden" role="tabpanel">
+              <div class="chat-log" id="chatLog"></div>
+              <div class="chat-suggest" id="chatSuggest"></div>
+              <div class="chat-composer">
+                <textarea id="chatInput" class="chat-input" rows="1" placeholder="基于视频内容提问，Enter 发送，Shift+Enter 换行" disabled></textarea>
+                <button id="btnSend" class="btn btn-primary btn-send" type="button" disabled>
+                  <svg class="icon"><use href="#i-send"/></svg><span>发送</span>
+                </button>
+              </div>
+              <div class="chat-hint">
+                <svg class="icon"><use href="#i-spark"/></svg>
+                <span id="chatHintText">回答由 DeepSeek 根据视频转写生成，引用以「MM:SS」标注，点击可跳转播放。</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 作业加载状态 -->
+        <div id="loadingState" class="loading-state is-hidden">
+          <div class="spinner"></div>
+          <p>正在载入作业…</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 设置弹窗 -->
+  <div id="settingsModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-backdrop" data-close="settings"></div>
+    <div class="modal-card" role="document">
+      <div class="modal-head">
+        <h2 id="settingsTitle"><svg class="icon"><use href="#i-settings"/></svg>设置</h2>
+        <button class="icon-btn" data-close="settings" type="button" aria-label="关闭设置">
+          <svg class="icon"><use href="#i-close"/></svg>
+        </button>
+      </div>
+      <form class="modal-body settings-form" id="settingsForm" autocomplete="off" onsubmit="return false">
+        <section class="form-section">
+          <div class="form-section-head">
+            <h3>DeepSeek</h3>
+            <span class="field-hint">用于生成总结与视频问答，Key 仅保存在本机</span>
+          </div>
+          <label class="field">
+            <span class="field-label">API Key</span>
+            <div class="key-row">
+              <input id="setApiKey" class="input" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+              <button id="btnToggleKey" class="icon-btn" type="button" title="显示 / 隐藏 Key" aria-label="显示或隐藏 API Key">
+                <svg class="icon" id="keyEyeIcon"><use href="#i-eye"/></svg>
+              </button>
+            </div>
+            <span class="field-hint" id="keyHint">未配置</span>
+          </label>
+          <label class="field">
+            <span class="field-label">Base URL</span>
+            <input id="setBaseUrl" class="input" type="url" placeholder="https://api.deepseek.com" spellcheck="false">
+          </label>
+          <label class="field">
+            <span class="field-label">模型</span>
+            <div class="model-row">
+              <select id="setModel" class="input select">
+                <option value="deepseek-chat">deepseek-chat（推荐）</option>
+                <option value="deepseek-reasoner">deepseek-reasoner（深度推理）</option>
+                <option value="__custom__">自定义…</option>
+              </select>
+              <input id="setModelCustom" class="input is-hidden" type="text" placeholder="自定义模型名" spellcheck="false">
+            </div>
+          </label>
+        </section>
+
+        <section class="form-section">
+          <div class="form-section-head">
+            <h3>语音转写</h3>
+            <span class="field-hint">faster-whisper 在本机运行</span>
+          </div>
+          <div class="form-grid">
+            <label class="field">
+              <span class="field-label">Whisper 模型</span>
+              <select id="setWhisperModel" class="input select">
+                <option value="large-v3">large-v3（最准，推荐）</option>
+                <option value="large-v3-turbo">large-v3-turbo（更快）</option>
+                <option value="medium">medium</option>
+                <option value="small">small（最快）</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">运行设备</span>
+              <select id="setDevice" class="input select">
+                <option value="auto">auto（自动选择）</option>
+                <option value="cuda">cuda（NVIDIA GPU）</option>
+                <option value="cpu">cpu</option>
+              </select>
+            </label>
+          </div>
+          <div class="device-info" id="deviceInfo"></div>
+        </section>
+
+        <details class="form-section vision-section" id="visionSection">
+          <summary class="form-section-head">
+            <h3>视觉模型（可选）</h3>
+            <span class="field-hint">默认关闭，开启后会调用你配置的视觉 API 描述关键帧</span>
+            <svg class="icon chevron"><use href="#i-chevron"/></svg>
+          </summary>
+          <label class="switch-row">
+            <input id="setVisionEnabled" type="checkbox">
+            <span>启用视觉描述（需要 OpenAI 兼容的视觉模型）</span>
+          </label>
+          <label class="field">
+            <span class="field-label">Base URL</span>
+            <input id="setVisionBaseUrl" class="input" type="url" placeholder="https://api.example.com/v1" spellcheck="false">
+          </label>
+          <label class="field">
+            <span class="field-label">模型</span>
+            <input id="setVisionModel" class="input" type="text" placeholder="例如 qwen-vl-plus" spellcheck="false">
+          </label>
+          <label class="field">
+            <span class="field-label">API Key</span>
+            <input id="setVisionApiKey" class="input" type="password" autocomplete="off" placeholder="留空表示不修改" spellcheck="false">
+            <span class="field-hint" id="visionKeyHint">未配置</span>
+          </label>
+        </details>
+      </form>
+      <div class="modal-foot">
+        <div class="test-result" id="testResult"></div>
+        <div class="modal-foot-actions">
+          <button id="btnTestKey" class="btn btn-ghost" type="button">测试连接</button>
+          <button id="btnSaveSettings" class="btn btn-primary" type="button">保存设置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div id="confirmModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-backdrop" data-close="confirm"></div>
+    <div class="modal-card modal-card-sm" role="document">
+      <div class="modal-head">
+        <h2 id="confirmTitle">确认操作</h2>
+        <button class="icon-btn" data-close="confirm" type="button" aria-label="关闭">
+          <svg class="icon"><use href="#i-close"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage" class="confirm-message"></p>
+      </div>
+      <div class="modal-foot modal-foot-actions">
+        <button id="btnConfirmCancel" class="btn btn-ghost" type="button">取消</button>
+        <button id="btnConfirmOk" class="btn btn-primary danger" type="button">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 画面帧放大 -->
+  <div id="lightbox" class="lightbox is-hidden" role="dialog" aria-modal="true" aria-label="画面帧预览">
+    <div class="lightbox-backdrop" data-close="lightbox"></div>
+    <figure class="lightbox-card">
+      <button class="icon-btn lightbox-close" data-close="lightbox" type="button" aria-label="关闭预览">
+        <svg class="icon"><use href="#i-close"/></svg>
+      </button>
+      <img id="lightboxImg" alt="画面帧" src="">
+      <figcaption>
+        <button id="lightboxTime" class="ts" type="button">00:00</button>
+        <p id="lightboxText"></p>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <noscript>
+    <div class="noscript">本页面需要启用 JavaScript 才能使用视频分析功能。</div>
+  </noscript>
+
+  <script src="markdown.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

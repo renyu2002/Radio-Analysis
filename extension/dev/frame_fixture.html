@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>iframe 视频 fixture</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      background: #d7dbe2;
+    }
+    video {
+      display: block;
+      width: 400px;
+      height: 225px;
+      background: #333;
+    }
+  </style>
+</head>
+<body>
+  <video id="frame-video"></video>
+  <script>
+    // 用属性打桩模拟一个"正在播放、有地址、有时长"的视频，
+    // 让 dev/browser_test.html 能验证 detectVideosInPage 的同源 iframe 递归逻辑。
+    (function () {
+      var video = document.getElementById('frame-video');
+      Object.defineProperty(video, 'paused', { value: false, configurable: true });
+      Object.defineProperty(video, 'ended', { value: false, configurable: true });
+      Object.defineProperty(video, 'readyState', { value: 4, configurable: true });
+      Object.defineProperty(video, 'currentSrc', { value: 'https://cdn.example.test/frame.mp4', configurable: true });
+      Object.defineProperty(video, 'src', { value: 'https://cdn.example.test/frame.mp4', configurable: true });
+      Object.defineProperty(video, 'duration', { value: 300, configurable: true });
+      Object.defineProperty(video, 'videoWidth', { value: 1280, configurable: true });
+      Object.defineProperty(video, 'videoHeight', { value: 720, configurable: true });
+    })();
+  </script>
+</body>
+</html>

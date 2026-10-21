@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>popup 预览（扩展开发用）</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0b0e14;
+      overflow: hidden;
+    }
+    iframe {
+      display: block;
+      width: 380px;
+      height: 660px;
+      border: 0;
+      background: #0b0e14;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="app" src="../popup.html#manual"></iframe>
+  <pre id="report" hidden>pending</pre>
+  <script>
+    /*
+     * popup 样式预览 + DOM 状态自测页（仅开发用，不参与扩展运行时）。
+     * 做法：iframe 加载 popup.html#manual（不自动引导），父页面注入 chrome API 打桩
+     * 与 fetch 打桩后手动调用 VA_BOOT.boot()，等 UI 稳定后把关键文案上报给 mock 后端。
+     *
+     * 模式：detected（默认）/ offline / novideo / success
+     */
+    (function () {
+      'use strict';
+      var params = new URLSearchParams(location.search);
+      var MODE = params.get('mode') || 'detected';
+      var PAGE_URL = 'https://www.bilibili.com/video/BV1xx411c7mD';
+      var PAGE_TITLE = '【4K】视频分析扩展 · 演示视频标题';
+
+      var HEALTH = {
+        ok: true,
+        version: '1.0.0',
+        deepseek_configured: true,
+        asr: { device: 'cuda', model: 'large-v3', compute_type: 'float16', cuda_available: true },
+        port: 8765,
+      };
+      var JOB = {
+        id: 'job_demo01',
+        status: 'pending',
+        stage: 'queued',
+        stage_label: '排队中',
+        progress: 0,
+        source_type: 'tab',
+        title: PAGE_TITLE,
+        source_url: PAGE_URL,
+        duration: 754.2,
+      };
+
+      function sleep(ms) {
+        return new Promise(function (resolve) {
+          setTimeout(resolve, ms);
+        });
+      }
+
+      function jsonResponse(data, status) {
+        var code = status || 200;
+        return {
+          ok: code >= 200 && code < 300,
+          status: code,
+          headers: { get: function () { return 'application/json'; } },
+          json: function () { return Promise.resolve(data); },
+          text: function () { return Promise.resolve(JSON.stringify(data)); },
+        };
+      }
+
+      function detectionFor(mode) {
+        if (mode === 'novideo') {
+          return {
+            ok: true, found: false, count: 0, visibleCount: 0, videoUrl: null, duration: 0,
+            poster: null, pageUrl: PAGE_URL, title: PAGE_TITLE, playing: false, width: 0,
+            height: 0, isBlob: false, isHls: false, frameCount: 0, blockedFrameCount: 1,
+          };
+        }
+        return {
+          ok: true, found: true, count: 2, visibleCount: 1,
+          videoUrl: 'blob:https://www.bilibili.com/xyz-123',
+          duration: 754.2, poster: 'https://i0.hdslb.com/bfs/archive/demo.jpg',
+          pageUrl: PAGE_URL, title: PAGE_TITLE, playing: true, width: 1920, height: 1080,
+          isBlob: true, isHls: false, frameCount: 1, blockedFrameCount: 0,
+        };
+      }
+
+      function installFetchStub(w) {
+        w.fetch = async function (url) {
+          await sleep(50);
+          var target = String(url);
+          if (target.indexOf('/api/health') !== -1) {
+            if (MODE === 'offline') throw new TypeError('Failed to fetch');
+            return jsonResponse(HEALTH, 200);
+          }
+          if (target.indexOf('/api/jobs') !== -1) return jsonResponse({ job: JOB }, 200);
+          return jsonResponse({ detail: 'mock not found' }, 404);
+        };
+      }
+
+      function makeChromeStub() {
+        return {
+          runtime: { getManifest: function () { return { version: '1.0.0' }; } },
+          tabs: {
+            query: async function () { return [{ id: 7, title: PAGE_TITLE, url: PAGE_URL }]; },
+            create: async function () { return { id: 8 }; },
+          },
+          scripting: {
+            executeScript: async function () { return [{ result: detectionFor(MODE) }]; },
+          },
+          storage: {
+            local: {
+              get: async function (key) {
+                var data = {};
+                if (typeof key === 'string') {
+                  data[key] = 'http://127.0.0.1:8765';
+                } else if (key && typeof key === 'object') {
+                  Object.keys(key).forEach(function (name) {
+                    data[name] = 'http://127.0.0.1:8765';
+                  });
+                }
+                return data;
+              },
+              set: async function () { return undefined; },
+            },
+          },
+        };
+      }
+
+      function text(w, id) {
+        var node = w.document.getElementById(id);
+        return node ? node.textContent.trim() : '';
+      }
+
+      function shown(w, id) {
+        var node = w.document.getElementById(id);
+        return !!node && !node.hidden;
+      }
+
+      async function waitFor(fn, timeoutMs) {
+        var deadline = Date.now() + (timeoutMs || 4000);
+        while (Date.now() < deadline) {
+          try {
+            if (fn()) return true;
+          } catch (err) {
+            /* ignore */
+          }
+          await sleep(50);
+        }
+        return false;
+      }
+
+      function capture(w) {
+        var d = w.document;
+        return {
+          pageTitle: text(w, 'page-title'),
+          pageUrl: text(w, 'page-url'),
+          detectTitle: text(w, 'detect-title'),
+          detectSub: text(w, 'detect-sub'),
+          detectBadge: text(w, 'detect-badge'),
+          duration: text(w, 'meta-duration'),
+          resolution: text(w, 'meta-resolution'),
+          source: text(w, 'meta-source'),
+          detectHint: text(w, 'detect-hint'),
+          backendText: text(w, 'backend-text'),
+          backendSub: text(w, 'backend-sub'),
+          backendHint: text(w, 'backend-hint'),
+          actionsLabel: text(w, 'btn-analyze-label'),
+          actionsNote: text(w, 'actions-note'),
+          analyzeDisabled: !!d.getElementById('btn-analyze').disabled,
+          analyzeHidden: !!d.getElementById('btn-analyze').hidden,
+          successHidden: !!d.getElementById('success-card').hidden,
+          successTitle: text(w, 'success-title'),
+          successSub: text(w, 'success-sub'),
+          webDisabled: !!d.getElementById('btn-web').disabled,
+          errorHidden: !!d.getElementById('error-box').hidden,
+          errorTitle: text(w, 'error-title'),
+          errorBody: text(w, 'error-body'),
+          bodyWidth: Math.round(d.body.getBoundingClientRect().width),
+          bodyHeight: d.body.scrollHeight,
+          html: d.documentElement.outerHTML,
+        };
+      }
+
+      function report(snapshot) {
+        var node = document.getElementById('report');
+        node.textContent = JSON.stringify({ kind: 'popup-page', mode: MODE, snapshot: snapshot });
+        document.body.setAttribute('data-report-done', '1');
+        document.title = 'preview-' + MODE + '-done';
+      }
+
+      var frame = document.getElementById('app');
+      frame.addEventListener('load', async function () {
+        var w = frame.contentWindow;
+        try {
+          w.chrome = makeChromeStub();
+          installFetchStub(w);
+          if (!w.VA_BOOT || typeof w.VA_BOOT.boot !== 'function') throw new Error('VA_BOOT 未就绪');
+          await w.VA_BOOT.boot();
+
+          if (MODE === 'success') {
+            await waitFor(function () { return !w.document.getElementById('btn-analyze').disabled; }, 4000);
+            w.document.getElementById('btn-analyze').click();
+            await waitFor(function () { return shown(w, 'success-card'); }, 5000);
+          } else if (MODE === 'offline') {
+            await waitFor(function () { return text(w, 'backend-text').indexOf('未启动') !== -1; }, 5000);
+          } else {
+            await waitFor(function () { return text(w, 'backend-text').indexOf('已连接') !== -1; }, 5000);
+            await waitFor(function () { return text(w, 'detect-title').indexOf('检测') !== -1; }, 5000);
+          }
+          await sleep(120);
+          await report(capture(w));
+        } catch (err) {
+          await report({ mode: MODE, error: String((err && err.stack) || err) });
+        }
+      }, { once: true });
+    })();
+  </script>
+</body>
+</html>

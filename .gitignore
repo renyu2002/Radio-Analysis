@@ -1,0 +1,44 @@
+# 运行期数据（含 API Key、视频、转写、对话）——切勿提交
+data/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# 前端 / 扩展开发
+node_modules/
+extension/dev/test-report.json
+
+# 测试产物
+tests/.artifacts/
+
+# 环境变量与本地配置
+.env
+.env.*
+*.local
+
+# 系统 / 编辑器
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# 日志与临时文件
+*.log
+*.tmp
+*.bak
+*.zip
+*.7z
+*.rar

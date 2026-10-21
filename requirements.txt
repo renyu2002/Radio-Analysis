@@ -1,0 +1,33 @@
+# 视频分析 · DeepSeek —— Python 依赖（Windows / Python 3.12）
+# 安装：pip install -r requirements.txt
+#
+# 注意：av 必须锁定 16.1.0 —— faster-whisper 1.2.1 使用 av.open(metadata_errors=...)，
+#       av>=17 已移除该参数，升级会导致转写直接报 TypeError。
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+pydantic>=2.8
+httpx>=0.27
+
+# 音视频处理
+faster-whisper==1.2.1
+imageio-ffmpeg>=0.5
+yt-dlp>=2025.1.1
+av==16.1.0
+numpy>=1.26
+opencv-python-headless>=4.9
+Pillow>=10.0
+
+# 画面文字识别（本地 OCR，无需联网）
+rapidocr>=2.0
+onnxruntime>=1.18
+
+# Windows CUDA 运行库（RTX 显卡；faster-whisper 的 ctranslate2 需要 cuDNN 9 + cuBLAS 12）
+# 安装后在 .venv\Lib\site-packages\nvidia\*\bin，代码里通过 os.add_dll_directory 加载
+nvidia-cudnn-cu12==9.27.0.42; sys_platform == "win32"
+nvidia-cublas-cu12==12.9.2.10; sys_platform == "win32"
+nvidia-cuda-runtime-cu12==12.9.79; sys_platform == "win32"
+nvidia-cuda-nvrtc-cu12==12.9.86; sys_platform == "win32"
+
+# 测试
+pytest>=8.0

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>扩展逻辑浏览器测试</title>
+  <style>
+    body {
+      margin: 16px;
+      color: #111;
+      background: #fff;
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+    }
+    h1 {
+      font-size: 16px;
+    }
+    #stage {
+      position: relative;
+      width: 900px;
+      height: 620px;
+    }
+    #stage video {
+      display: block;
+      background: #333;
+    }
+    pre {
+      white-space: pre-wrap;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>视频分析扩展 · 浏览器逻辑测试</h1>
+  <p>本页由 dev/verify_extension.py 通过 Chrome headless 加载，测试结果通过 /api/_mock/report 回传。</p>
+  <div id="stage"></div>
+  <pre id="result">running</pre>
+  <script src="../shared.js"></script>
+  <script>
+    (async function () {
+      var checks = [];
+
+      function check(name, ok, detail) {
+        checks.push({ name: name, ok: !!ok, detail: detail === undefined ? null : detail });
+      }
+
+      function fakeVideo(options) {
+        var video = document.createElement('video');
+        video.style.width = options.width + 'px';
+        video.style.height = options.height + 'px';
+        if (options.display) video.style.display = options.display;
+        document.getElementById('stage').appendChild(video);
+        Object.defineProperty(video, 'paused', { value: !options.playing, configurable: true });
+        Object.defineProperty(video, 'ended', { value: false, configurable: true });
+        Object.defineProperty(video, 'readyState', { value: 4, configurable: true });
+        Object.defineProperty(video, 'currentSrc', { value: options.src || '', configurable: true });
+        Object.defineProperty(video, 'src', { value: options.src || '', configurable: true });
+        Object.defineProperty(video, 'duration', { value: options.duration || 0, configurable: true });
+        Object.defineProperty(video, 'poster', { value: options.poster || '', configurable: true });
+        Object.defineProperty(video, 'videoWidth', { value: options.videoWidth || 0, configurable: true });
+        Object.defineProperty(video, 'videoHeight', { value: options.videoHeight || 0, configurable: true });
+        return video;
+      }
+
+      function clearStage() {
+        document.getElementById('stage').textContent = '';
+      }
+
+      function sleep(ms) {
+        return new Promise(function (resolve) {
+          setTimeout(resolve, ms);
+        });
+      }
+
+      try {
+        /* ---------- 1. POST /api/jobs 请求体（契约 §8.3） ---------- */
+        var page = { pageUrl: 'https://www.bilibili.com/video/BV1xx411c7mD', title: '测试视频标题' };
+        var video = {
+          found: true,
+          count: 2,
+          visibleCount: 1,
+          videoUrl: 'blob:https://www.bilibili.com/123',
+          duration: 754.234,
+          poster: 'https://i0.hdslb.com/bfs/archive/cover.jpg',
+          title: '测试视频标题',
+          isBlob: true,
+          playing: true,
+          width: 1920,
+          height: 1080,
+        };
+        var payload = buildTabJobPayload(page, video);
+        var keys = Object.keys(payload).sort();
+        check(
+          '请求体字段与契约 §8.3 一致',
+          JSON.stringify(keys) === JSON.stringify(['duration', 'page_url', 'poster', 'source_type', 'title', 'video_url']),
+          keys
+        );
+        check('source_type 为 tab', payload.source_type === 'tab', payload.source_type);
+        check('page_url 使用标签页地址', payload.page_url === page.pageUrl, payload.page_url);
+        check('video_url 原样传递 blob 地址', payload.video_url === video.videoUrl, payload.video_url);
+        check('duration 保留两位小数', payload.duration === 754.23, payload.duration);
+        check('poster 原样传递', payload.poster === video.poster, payload.poster);
+        check('duration 为数字类型', typeof payload.duration === 'number', typeof payload.duration);
+        var posterInvalid = buildTabJobPayload(page, {
+          videoUrl: null,
+          poster: 'data:image/png;base64,AAAA',
+        });
+        check('poster 非 http(s) 时置为 null', posterInvalid.poster === null, posterInvalid.poster);
+        var livePayload = buildTabJobPayload(page, { videoUrl: null, duration: Infinity });
+        check('直播流 duration 非有限值时回退为 0', livePayload.duration === 0, livePayload.duration);
+
+        var noVideo = buildTabJobPayload(page, null);
+        check('无视频时 video_url 为 null', noVideo.video_url === null, noVideo.video_url);
+        check('无视频时 duration 为 0', noVideo.duration === 0, noVideo.duration);
+        check('title 回退到页面标题', noVideo.title === page.title, noVideo.title);
+        var fallbackTitle = buildTabJobPayload({ pageUrl: 'https://example.test/a', title: '' }, null);
+        check('title 为空时回退到页面地址', fallbackTitle.title === 'https://example.test/a', fallbackTitle.title);
+
+        /* ---------- 2. 地址 / 格式化 / 错误解析 ---------- */
+        check('地址补全 http://', normalizeBackendUrl('127.0.0.1:9000') === 'http://127.0.0.1:9000', normalizeBackendUrl('127.0.0.1:9000'));
+        check('地址去掉末尾斜杠', normalizeBackendUrl('http://127.0.0.1:8765/') === 'http://127.0.0.1:8765', normalizeBackendUrl('http://127.0.0.1:8765/'));
+        var invalidRejected = false;
+        try {
+          normalizeBackendUrl('ftp://127.0.0.1:21');
+        } catch (err) {
+          invalidRejected = true;
+        }
+        check('拒绝非 http(s) 地址', invalidRejected);
+        check('formatDuration 754.2 → 12:34', formatDuration(754.2) === '12:34', formatDuration(754.2));
+        check('formatDuration 3725 → 1:02:05', formatDuration(3725) === '1:02:05', formatDuration(3725));
+        check('formatDuration 未知 → 未知', formatDuration(NaN) === '未知', formatDuration(NaN));
+        check('formatResolution', formatResolution(1920, 1080) === '1920 × 1080', formatResolution(1920, 1080));
+        check(
+          '已知站点判断',
+          isKnownVideoPage('https://www.bilibili.com/video/BV1xx') === true &&
+            isKnownVideoPage('https://example.com/v') === false
+        );
+        check(
+          '解析后端错误 detail',
+          apiErrorMessage({ detail: '尚未配置 DeepSeek API Key' }, 400) === '尚未配置 DeepSeek API Key'
+        );
+
+        /* ---------- 3. 页面视频检测 ---------- */
+        clearStage();
+        var smallPlaying = fakeVideo({
+          width: 160,
+          height: 90,
+          playing: true,
+          src: 'https://cdn.example.test/small.mp4',
+          duration: 30,
+          videoWidth: 640,
+          videoHeight: 360,
+        });
+        var largePaused = fakeVideo({
+          width: 320,
+          height: 180,
+          playing: false,
+          src: 'https://cdn.example.test/large.mp4',
+          duration: 120,
+          poster: 'https://cdn.example.test/large.jpg',
+          videoWidth: 1920,
+          videoHeight: 1080,
+        });
+        var hiddenVideo = fakeVideo({
+          width: 600,
+          height: 300,
+          playing: false,
+          src: 'https://cdn.example.test/hidden.mp4',
+          duration: 600,
+          display: 'none',
+        });
+        var det1 = detectVideosInPage();
+        check('检测到 3 个 video', det1.count === 3, det1.count);
+        check('优先选择正在播放的可见视频', det1.videoUrl === 'https://cdn.example.test/small.mp4', det1.videoUrl);
+        check('playing 标记正确', det1.playing === true, det1.playing);
+        check('返回视频时长', det1.duration === 30, det1.duration);
+        check('返回页面地址与标题', det1.pageUrl === location.href && typeof det1.title === 'string', det1.pageUrl);
+        check('跳过 display:none 视频', det1.visibleCount === 2, det1.visibleCount);
+
+        hiddenVideo.remove();
+        smallPlaying.remove();
+        var det2 = detectVideosInPage();
+        check('播放视频移除后选择最大可见视频', det2.videoUrl === 'https://cdn.example.test/large.mp4', det2.videoUrl);
+        check('选择视频分辨率', det2.width === 1920 && det2.height === 1080, [det2.width, det2.height]);
+        check('poster 被返回', det2.poster === 'https://cdn.example.test/large.jpg', det2.poster);
+
+        // 同源 iframe 递归
+        clearStage();
+        fakeVideo({
+          width: 120,
+          height: 68,
+          playing: true,
+          src: 'https://cdn.example.test/top.mp4',
+          duration: 10,
+        });
+        var iframe = document.createElement('iframe');
+        iframe.src = 'frame_fixture.html';
+        iframe.style.width = '420px';
+        iframe.style.height = '240px';
+        iframe.style.border = '0';
+        document.getElementById('stage').appendChild(iframe);
+        await new Promise(function (resolve) {
+          iframe.addEventListener('load', resolve, { once: true });
+        });
+        await sleep(120);
+        var det3 = detectVideosInPage();
+        check('递归扫描同源 iframe', det3.videoUrl === 'https://cdn.example.test/frame.mp4', det3.videoUrl);
+        check('iframe 视频计入总数', det3.count === 2, det3.count);
+        iframe.remove();
+        clearStage();
+
+        // blob 视频
+        var blobVideo = fakeVideo({
+          width: 200,
+          height: 112,
+          playing: true,
+          src: 'blob:https://www.bilibili.com/abc-123',
+          duration: 42,
+        });
+        var det4 = detectVideosInPage();
+        check('识别 blob: 视频', det4.isBlob === true && String(det4.videoUrl).indexOf('blob:') === 0, det4.videoUrl);
+        var blobPayload = buildTabJobPayload(page, det4);
+        check('blob 视频请求体 video_url 为 blob 地址', blobPayload.video_url === det4.videoUrl, blobPayload.video_url);
+        blobVideo.remove();
+
+        // 空页面
+        var det5 = detectVideosInPage();
+        check('无视频时 found=false', det5.found === false && det5.count === 0 && det5.videoUrl === null, det5.count);
+
+        /* ---------- 4. 与 mock 后端交互（真实 fetch） ---------- */
+        var health = await backendHealth(location.origin, 3000);
+        check('GET /api/health 成功', health.ok === true && health.version === 'mock-1.0.0', health);
+        var submitted = await submitTabJob(location.origin, payload, 5000);
+        check(
+          'POST /api/jobs 返回 job',
+          submitted.ok === true && submitted.job && submitted.job.id === 'mock-job-1',
+          submitted
+        );
+        var down = await backendHealth('http://127.0.0.1:65531', 800);
+        check(
+          '后端未启动时优雅失败',
+          down.ok === false && (down.kind === 'network' || down.kind === 'timeout'),
+          down
+        );
+      } catch (err) {
+        check('测试执行异常', false, String((err && err.stack) || err));
+      }
+
+      var passed = checks.filter(function (item) {
+        return item.ok;
+      }).length;
+      var summary = {
+        kind: 'browser-test',
+        total: checks.length,
+        passed: passed,
+        failed: checks.length - passed,
+        checks: checks,
+        userAgent: navigator.userAgent,
+      };
+      document.getElementById('result').textContent = JSON.stringify(summary, null, 2);
+      document.body.setAttribute('data-test-done', '1');
+      document.title = 'browser-test-done';
+    })();
+  </script>
+</body>
+</html>

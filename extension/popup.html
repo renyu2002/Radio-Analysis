@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>视频分析 · DeepSeek</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <img class="logo" src="icons/icon48.png" alt="" width="30" height="30">
+      <div class="brand">
+        <div class="brand-name">视频分析<span class="brand-sep">·</span><span class="brand-accent">DeepSeek</span></div>
+        <div class="brand-sub">本地视频理解助手</div>
+      </div>
+      <button class="icon-btn" id="btn-settings" type="button" title="本地服务地址" aria-label="本地服务地址" aria-expanded="false">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path>
+          <circle cx="15" cy="7" r="2"></circle>
+          <circle cx="9" cy="17" r="2"></circle>
+        </svg>
+      </button>
+    </header>
+
+    <section class="card page-card" aria-label="当前页面">
+      <div class="card-label">当前页面</div>
+      <div class="page-title" id="page-title">正在读取当前标签页…</div>
+      <div class="page-url" id="page-url">—</div>
+    </section>
+
+    <section class="card detect-card" id="detect-card" aria-label="视频检测结果">
+      <div class="detect-row">
+        <div class="detect-icon" id="detect-icon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+            <path d="M10 9.4l5 2.6-5 2.6z" fill="currentColor" stroke="none"></path>
+          </svg>
+        </div>
+        <div class="detect-main">
+          <div class="detect-title" id="detect-title">正在检测视频…</div>
+          <div class="detect-sub" id="detect-sub">扫描页面中的播放器</div>
+        </div>
+        <span class="badge badge-muted" id="detect-badge" hidden>—</span>
+      </div>
+      <div class="meta-grid" id="meta-grid" hidden>
+        <div class="meta-item">
+          <span class="meta-label">时长</span>
+          <span class="meta-value" id="meta-duration">--</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">画面</span>
+          <span class="meta-value" id="meta-resolution">--</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">来源</span>
+          <span class="meta-value" id="meta-source">--</span>
+        </div>
+      </div>
+      <div class="hint-box" id="detect-hint" hidden></div>
+    </section>
+
+    <section class="card backend-card" aria-label="本地服务状态">
+      <div class="backend-row">
+        <span class="status-dot checking" id="backend-dot"></span>
+        <div class="backend-main">
+          <div class="backend-text" id="backend-text" aria-live="polite">正在连接本地服务…</div>
+          <div class="backend-sub" id="backend-sub">http://127.0.0.1:8765</div>
+        </div>
+        <button class="text-btn retry-btn" id="btn-retry" type="button" title="重新连接并检测">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 11a8 8 0 1 0-2.3 6.2"></path>
+            <path d="M20 4v7h-7"></path>
+          </svg>
+          <span>重试</span>
+        </button>
+      </div>
+      <div class="hint-box hint-warn" id="backend-hint" hidden></div>
+      <div class="backend-edit" id="backend-edit" hidden>
+        <label class="edit-label" for="backend-input">本地服务地址</label>
+        <div class="input-row">
+          <input class="input" id="backend-input" type="text" spellcheck="false" autocomplete="off" placeholder="http://127.0.0.1:8765">
+          <button class="btn btn-ghost btn-sm" id="btn-save-backend" type="button">保存</button>
+        </div>
+        <div class="edit-note">保存后自动重新连接；默认由 <code>run.ps1</code> 启动在 8765 端口。</div>
+        <div class="field-error" id="backend-error" hidden></div>
+      </div>
+    </section>
+
+    <section class="card success-card" id="success-card" hidden aria-live="polite">
+      <div class="success-row">
+        <div class="success-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12.5l4.5 4.5L19 7.5"></path>
+          </svg>
+        </div>
+        <div class="success-main">
+          <div class="success-title">已提交：<span id="success-title">—</span></div>
+          <div class="success-sub" id="success-sub"></div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" id="btn-open" type="button">
+        <span>打开分析界面</span>
+        <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 4h6v6"></path>
+          <path d="M20 4l-9 9"></path>
+          <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4"></path>
+        </svg>
+      </button>
+      <button class="text-btn again-btn" id="btn-again" type="button">再分析一次</button>
+    </section>
+
+    <div class="alert" id="error-box" hidden role="alert">
+      <div class="alert-title" id="error-title">出错了</div>
+      <div class="alert-body" id="error-body"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-analyze" type="button" disabled>
+        <span class="spinner" id="btn-spinner" hidden aria-hidden="true"></span>
+        <svg class="icon play-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M8 5.2v13.6L19 12z"></path>
+        </svg>
+        <span id="btn-analyze-label">分析这个视频</span>
+      </button>
+      <div class="actions-note" id="actions-note" hidden></div>
+      <button class="link-btn" id="btn-web" type="button">
+        <span>打开网页分析界面（粘贴链接 / 上传文件）</span>
+        <svg class="icon icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7 17L17 7"></path>
+          <path d="M8 7h9v9"></path>
+        </svg>
+      </button>
+    </div>
+
+    <footer class="foot">
+      <span id="foot-version">v1.0.0</span>
+      <span class="foot-sep">·</span>
+      <span>本地处理，视频不上传云端</span>
+    </footer>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
